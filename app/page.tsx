@@ -424,6 +424,7 @@ export default function DashboardPage() {
     tipo: "all",
     frecuencia: "all",
   })
+  const [maintenanceSearchTerm, setMaintenanceSearchTerm] = useState("")
   const [calendarView, setCalendarView] = useState(false) // State to toggle between list and calendar view
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [showMaintenanceForm, setShowMaintenanceForm] = useState(false)
@@ -4905,7 +4906,29 @@ export default function DashboardPage() {
 
 
 
-  const renderMantenimiento = () => (
+  const renderMantenimiento = () => {
+    // Filter maintenance schedules based on search term and filters
+    const filteredMaintenanceSchedules = maintenanceSchedules.filter((m: any) => {
+      // Apply search term filter
+      const searchLower = maintenanceSearchTerm.toLowerCase()
+      const equipoNombre = typeof m.equipo === 'object' ? m.equipo?.nombre : m.equipo
+      const matchSearch = !maintenanceSearchTerm || 
+        (equipoNombre && equipoNombre.toLowerCase().includes(searchLower)) ||
+        (m.tipo && m.tipo.toLowerCase().includes(searchLower)) ||
+        (m.frecuencia && m.frecuencia.toLowerCase().includes(searchLower)) ||
+        (m.observaciones && m.observaciones.toLowerCase().includes(searchLower)) ||
+        (m.id && m.id.toString().includes(searchLower))
+      
+      // Apply tipo filter
+      const matchTipo = maintenanceFilters.tipo === "all" || m.tipo === maintenanceFilters.tipo
+      
+      // Apply frecuencia filter
+      const matchFrecuencia = maintenanceFilters.frecuencia === "all" || m.frecuencia === maintenanceFilters.frecuencia
+      
+      return matchSearch && matchTipo && matchFrecuencia
+    })
+
+    return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">{""}</h1>
@@ -5001,6 +5024,15 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold">Mantenimientos Programados</h3>
             <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Buscar:</span>
+                <Input
+                  className="w-48"
+                  placeholder="Equipo, tipo, observaciones..."
+                  value={maintenanceSearchTerm}
+                  onChange={(e) => setMaintenanceSearchTerm(e.target.value)}
+                />
+              </div>
               <Select
                 value={maintenanceFilters.tipo}
                 onValueChange={(value) => setMaintenanceFilters({ ...maintenanceFilters, tipo: value })}
@@ -5010,8 +5042,8 @@ export default function DashboardPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los tipos</SelectItem>
-                  <SelectItem value="calibracion">Calibraci��n</SelectItem>
-                  <SelectItem value="inspeccion">Inspección</SelectItem>
+                  <SelectItem value="calibracion">Calibracion</SelectItem>
+                  <SelectItem value="inspeccion">Inspeccion</SelectItem>
                   <SelectItem value="limpieza">Limpieza</SelectItem>
                 </SelectContent>
               </Select>
@@ -5033,7 +5065,10 @@ export default function DashboardPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setMaintenanceFilters({ tipo: "all", frecuencia: "all" })}
+                onClick={() => {
+                  setMaintenanceFilters({ tipo: "all", frecuencia: "all" })
+                  setMaintenanceSearchTerm("")
+                }}
               >
                 Limpiar
               </Button>
@@ -5062,7 +5097,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {maintenanceSchedules.map((m: any) => (
+                  {filteredMaintenanceSchedules.map((m: any) => (
                     <tr key={m.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="px-4 py-2 text-sm text-gray-600 font-mono">{m.id}</td>
                       <td className="px-4 py-2 font-medium">{typeof m.equipo === 'object' ? m.equipo?.nombre : m.equipo || "N/A"}</td>
@@ -5159,6 +5194,11 @@ export default function DashboardPage() {
                   ))}
                 </tbody>
               </table>
+              {filteredMaintenanceSchedules.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No se encontraron mantenimientos con los criterios de búsqueda.</p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -5372,6 +5412,7 @@ export default function DashboardPage() {
       </Dialog>
     </div>
   )
+  }
 
   const handleGenerateReport = async () => {
     setIsGeneratingReport(true)
