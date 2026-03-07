@@ -58,6 +58,7 @@ import {
   Briefcase,
   AlertCircle,
   AlertTriangle,
+  Image as ImageIcon,
 } from "lucide-react"
 import {
   BarChart,
@@ -3769,7 +3770,97 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg font-medium">Documentos Asociados</h3>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      id="document-upload"
+                      className="hidden"
+                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                      onChange={handleFileUpload}
+                      disabled={equipmentLoading}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById("document-upload")?.click()}
+                      disabled={equipmentLoading}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {equipmentLoading ? "Subiendo..." : "Subir Documento"}
+                    </Button>
+                  </div>
                 </div>
+                
+                {/* Documents List */}
+                {selectedEquipment.documentos && selectedEquipment.documentos.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedEquipment.documentos.map((doc, index) => {
+                      const isImage = doc.tipo?.startsWith("image/") || 
+                                     doc.nombre?.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)
+                      return (
+                        <div
+                          key={doc.id || index}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+                        >
+                          <div className="flex items-center gap-3">
+                            {isImage ? (
+                              <ImageIcon className="h-5 w-5 text-green-600" />
+                            ) : (
+                              <FileText className="h-5 w-5 text-blue-600" />
+                            )}
+                            <div>
+                              <p className="font-medium text-sm">{doc.nombre}</p>
+                              <p className="text-xs text-gray-500">
+                                {doc.fechaSubida ? formatDate(doc.fechaSubida) : "Sin fecha"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {doc.url && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewDocument(doc)}
+                                title="Ver documento"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {doc.id && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDownloadDocument(doc)}
+                                  title="Descargar documento"
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteDocument(doc.id!, index)}
+                                  className="text-red-600 hover:text-red-700"
+                                  title="Eliminar documento"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
+                    <FileText className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm">No hay documentos asociados</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Sube imagenes, PDFs o documentos usando el boton de arriba
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
